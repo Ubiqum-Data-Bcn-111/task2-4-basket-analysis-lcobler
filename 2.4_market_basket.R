@@ -145,7 +145,8 @@ for (i in 1:nrow(transactions_df_PT)){
   }
 }
 table(duplicated_product) #most desktops and laptops!
-barplot(table(duplicated_product), main="Duplicated Product types",col=rainbow(9))
+table_duplicates <- sort(table(duplicated_product),decreasing = T)
+barplot(table_duplicates, main="Duplicated Product types",col=rainbow(9))
 #sort first!
 
 #save the dataframe by product type
@@ -230,9 +231,203 @@ companies_PT <- read.transactions("companies_PT.csv", sep =",", format("basket")
 summary(companies_PT)
 itemFrequencyPlot(companies_PT,topN=9,col="Steelblue3",main="Companies")
 
+#New levels with product type
+categories <- itemLabels(transactions)
+for (k in 1:length(categories)){
+  #label Laptop
+  categories[k] <- gsub(".*Laptop.*","Laptop",categories[k])
+  categories[k][categories[k]=="Acer Aspire"] <- "Laptop"
+  categories[k][categories[k]=="ASUS Chromebook"] <- "Laptop"
+  categories[k][categories[k]=="Apple MacBook Pro"] <- "Laptop"
+  categories[k][categories[k]=="Apple MacBook Air"] <- "Laptop"
+  #label Accesories
+  categories[k] <- gsub(".*Mouse.*","Accessories",categories[k])
+  categories[k][categories[k]=="Generic Black 3-Button"] <- "Accessories"
+  categories[k] <- gsub(".*Keyboard.*","Accessories",categories[k])
+  categories[k] <- gsub(".*Cable.*","Accessories",categories[k])
+  categories[k][categories[k]=="HDMI Adapter"] <- "Accessories"
+  categories[k] <- gsub(".*Stand.*","Accessories",categories[k])
+  categories[k][categories[k]=="Full Motion Monitor Mount"] <- "Accessories"
+  categories[k] <- gsub(".*Drive.*","Accessories",categories[k])
+  #labels Audio
+  categories[k] <- gsub(".*Head.*","Audio",categories[k])
+  categories[k][categories[k]=="Apple Earpods"] <- "Audio"
+  categories[k][categories[k]=="Monster Beats By Dr Dre"] <- "Audio"
+  categories[k][categories[k]=="Monster Beats By Dr Dre "] <- "Audio"
+  categories[k] <- gsub(".*Speaker.*","Audio",categories[k])
+  categories[k][categories[k]=="DOSS Touch Wireless Bluetooth"] <- "Audio"
+  categories[k][categories[k]=="Cyber Acoustics"] <- "Audio"
+  categories[k][categories[k]=="Sonos"] <- "Audio"  
+  #labels Software
+  categories[k][categories[k]=="Microsoft Office Home and Student 2016"] <- "Software"
+  categories[k][categories[k]=="Computer Game"] <- "Software"
+  #labels Display
+  categories[k] <- gsub(".*Monitor.*","Display",categories[k])
+  #labels Printer Supplies
+  categories[k] <- gsub(".*Ink.*","Ink",categories[k])
+  categories[k][categories[k]=="Brother Printer Toner"] <- "Ink"
+  categories[k][categories[k]=="DYMO Labeling Tape"] <- "Ink"
+  categories[k][categories[k]=="DYMO Labeling Tape "] <- "Ink"
+  #labels Printer
+  categories[k] <- gsub(".*Printer.*","Printer",categories[k])
+  categories[k][categories[k]=="DYMO Label Manker"] <- "Printer"
+  categories[k][categories[k]=="DYMO Label Manker "] <- "Printer"
+  categories[k][categories[k]=="DYMO Label Manker  "] <- "Printer"
+  #labels Tablet
+  categories[k][categories[k]=="iPad"] <- "Tablet"
+  categories[k][categories[k]=="iPad "] <- "Tablet"
+  categories[k][categories[k]=="iPad Pro"] <- "Tablet"
+  categories[k][categories[k]=="iPad Pro "] <- "Tablet"
+  categories[k][categories[k]=="Fire HD Tablet"] <- "Tablet"
+  categories[k][categories[k]=="Samsung Galaxy Tablet"] <- "Tablet"
+  categories[k][categories[k]=="Kindle"] <- "Tablet"
+  categories[k][categories[k]=="Kindle "] <- "Tablet"
+  #Smart Home devices
+  categories[k][categories[k]=="Apple TV"] <- "Smart Home Devices"
+  categories[k][categories[k]=="Google Home"] <- "Smart Home Devices"
+  categories[k][categories[k]=="Smart Light Bulb"] <- "Smart Home Devices"
+  categories[k][categories[k]=="Fire TV Stick"] <- "Smart Home Devices"
+  categories[k][categories[k]=="Roku Express"] <- "Smart Home Devices"
+  #Desktop
+  categories[k] <- gsub(".*Desktop.*","Desktop",categories[k])
+  categories[k][categories[k]=="iMac"] <- "Desktop"
+  categories[k][categories[k]=="iMac "] <- "Desktop"
+}
+
+#make new level
+transactions@itemInfo$categories <- categories
+
+#New levels with product type according to electronidex
+categories_electro <- itemLabels(transactions)
+for (k in 1:length(categories_electro)){
+  #label Laptop
+  categories_electro[k] <- gsub(".*Laptop.*","Laptop",categories_electro[k])
+  categories_electro[k][categories_electro[k]=="Acer Aspire"] <- "Laptop"
+  categories_electro[k][categories_electro[k]=="ASUS Chromebook"] <- "Laptop"
+  categories_electro[k][categories_electro[k]=="Apple MacBook Pro"] <- "Laptop"
+  categories_electro[k][categories_electro[k]=="Apple MacBook Air"] <- "Laptop"
+  #label Mouse and Keyboard
+  categories_electro[k] <- gsub(".*Keyboard and Mouse.*","MK combo",categories_electro[k])
+  categories_electro[k][categories_electro[k]=="Logitech Desktop MK120 Mouse and keyboard Combo"] <- "MK combo"
+  #accessories
+  categories_electro[k][categories_electro[k]=="Microsoft Office Home and Student 2016"] <- "Accessories"
+  categories_electro[k][categories_electro[k]=="Computer Game"] <- "Accessories"
+  categories_electro[k][categories_electro[k]=="Belkin Mouse Pad"] <- "Accessories"
+  categories_electro[k][categories_electro[k]=="Large Mouse Pad"] <- "Accessories"
+  #label mouse
+  categories_electro[k] <- gsub(".*Mouse.*","Mouse",categories_electro[k])
+  categories_electro[k][categories_electro[k]=="Generic Black 3-Button"] <- "Mouse"
+  #label keyboard
+  categories_electro[k] <- gsub(".*Keyboard.*","Keyboard",categories_electro[k])
+  #computer cords
+  categories_electro[k] <- gsub(".*Cable.*","Computer Cords",categories_electro[k])
+  categories_electro[k][categories_electro[k]=="HDMI Adapter"] <- "Computer Cords"
+  #computer satnds
+  categories_electro[k] <- gsub(".*Stand.*","Accessories",categories_electro[k])
+  categories_electro[k][categories_electro[k]=="Full Motion Monitor Mount"] <- "Computer Stand"
+  #external hardrives
+  categories_electro[k] <- gsub(".*Drive.*","External Hardrives",categories_electro[k])
+  #Computer Headphones
+  categories_electro[k] <- gsub(".*Headset.*","Computer Headset",categories_electro[k])
+  categories_electro[k][categories_electro[k]=="Panasonic On-Ear Stereo Headphones RP-HT21"] <- "Computer Headset"
+  categories_electro[k][categories_electro[k]=="Kensington Headphones"] <- "Computer Headset"
+  categories_electro[k][categories_electro[k]=="Koss Home Headphones"] <- "Computer Headset"
+  categories_electro[k][categories_electro[k]=="Ailihen Stereo Headphones"] <- "Computer Headset"
+  #Active Headphones
+  categories_electro[k] <- gsub(".*Headphone.*","Active Headphones",categories_electro[k])
+  categories_electro[k][categories_electro[k]=="Apple Earpods"] <- "Active Headphones"
+  categories_electro[k][categories_electro[k]=="Monster Beats By Dr Dre"] <- "Active Headphones"
+  categories_electro[k][categories_electro[k]=="Monster Beats By Dr Dre "] <- "Active Headphones"
+  #Speakers
+  categories_electro[k] <- gsub(".*Speaker.*","Speakers",categories_electro[k])
+  categories_electro[k][categories_electro[k]=="DOSS Touch Wireless Bluetooth"] <- "Speakers"
+  categories_electro[k][categories_electro[k]=="Cyber Acoustics"] <- "Speakers"
+  categories_electro[k][categories_electro[k]=="Sonos"] <- "Speakers"  
+  #labels Display
+  categories_electro[k] <- gsub(".*Monitor.*","Display",categories_electro[k])
+  #labels Printer Supplies
+  categories_electro[k] <- gsub(".*Ink.*","Ink",categories_electro[k])
+  categories_electro[k][categories_electro[k]=="Brother Printer Toner"] <- "Ink"
+  categories_electro[k][categories_electro[k]=="DYMO Labeling Tape"] <- "Ink"
+  categories_electro[k][categories_electro[k]=="DYMO Labeling Tape "] <- "Ink"
+  #labels Printer
+  categories_electro[k] <- gsub(".*Printer.*","Printer",categories_electro[k])
+  categories_electro[k][categories_electro[k]=="DYMO Label Manker"] <- "Printer"
+  categories_electro[k][categories_electro[k]=="DYMO Label Manker "] <- "Printer"
+  categories_electro[k][categories_electro[k]=="DYMO Label Manker  "] <- "Printer"
+  #labels Tablet
+  categories_electro[k][categories_electro[k]=="iPad"] <- "Tablet"
+  categories_electro[k][categories_electro[k]=="iPad Pro"] <- "Tablet"
+  categories_electro[k][categories_electro[k]=="Fire HD Tablet"] <- "Tablet"
+  categories_electro[k][categories_electro[k]=="Samsung Galaxy Tablet"] <- "Tablet"
+  categories_electro[k][categories_electro[k]=="Kindle"] <- "Tablet"
+  #Smart Home devices
+  categories_electro[k][categories_electro[k]=="Apple TV"] <- "Smart Home Devices"
+  categories_electro[k][categories_electro[k]=="Google Home"] <- "Smart Home Devices"
+  categories_electro[k][categories_electro[k]=="Smart Light Bulb"] <- "Smart Home Devices"
+  categories_electro[k][categories_electro[k]=="Fire TV Stick"] <- "Smart Home Devices"
+  categories_electro[k][categories_electro[k]=="Roku Express"] <- "Smart Home Devices"
+  #Desktop
+  categories_electro[k] <- gsub(".*Desktop.*","Desktop",categories_electro[k])
+  categories_electro[k][categories_electro[k]=="iMac"] <- "Desktop"
+  categories_electro[k][categories_electro[k]=="iMac "] <- "Desktop"
+}
+
+#make new level
+transactions@itemInfo$categories_electro <- categories_electro
+
+#new labels for brand?
+#new labels for gamers?
+
+#subset company and individual
+transactions_companies <- transactions[companies_row]
+transactions_individual <- transactions[retail_row]
+
+#rules for companies, blackwell's categories
+transactions_companies_cat<- aggregate(transactions_companies, transactions_companies@itemInfo[["categories"]])
+summary(transactions_companies_cat)
+
+rules_com_cat<- apriori(transactions_companies_cat,parameter = list(support=0.001,conf=0.2,minlen=2),
+                        appearance = list(lhs=c("Desktop","Laptop"),
+                                          rhs=c("Accessories","Audio","Printer","Smart Home Devices","Display","Software",
+                                              "Ink","Tablet" ),default="none"))
+rules_com_cat <- rules_com_cat[!is.redundant(rules_com_cat)]                         
+# 11 rules :S
+
+#rules for retail
+transactions_indiv_cat<- aggregate(transactions_individual, transactions_individual@itemInfo[["categories"]])
+summary(transactions_indiv_cat)
+
+rules_indiv_cat<- apriori(transactions_indiv_cat,parameter = list(support=0.001,conf=0.2,minlen=2),
+                          appearance = list(lhs=c("Desktop","Laptop")))
+rules_indiv_cat <- rules_indiv_cat[!is.redundant(rules_indiv_cat)]                         
+plot(rules_indiv_cat)
+plot(rules_indiv_cat, method="grouped")
+
+#rules for companies, electronidex cat
+transactions_companies_electro<- aggregate(transactions_companies, transactions_companies@itemInfo[["categories_electro"]])
+summary(transactions_companies_electro)
+
+rules_com_electro<- apriori(transactions_companies_electro,parameter = list(support=0.001,conf=0.2,minlen=2),
+                        appearance = list(lhs=c("Desktop","Laptop")))
+rules_com_electro <- rules_com_electro[!is.redundant(rules_com_electro)]                         
+# 17 rules :S
+
+#rules for retail, electronidex cat
+transactions_indiv_electro<- aggregate(transactions_individual, transactions_individual@itemInfo[["categories_electro"]])
+summary(transactions_indiv_electro)
+
+rules_indiv_electro<- apriori(transactions_indiv_electro,parameter = list(support=0.001,conf=0.2,minlen=2))
+rules_indiv_electro <- rules_indiv_electro[!is.redundant(rules_indiv_electro)]                         
+plot(rules_indiv_electro)
+
+
+plot(rules_indiv_electro, method="grouped")
+
+
 
 #Rules for retail
-rules_retail <- apriori (retail_PT, parameter = list(supp = 0.001, conf = 0.5, minlen=2))
+rules_retail <- apriori (retail_PT, parameter = list(supp = 0.001, conf = 0.2, minlen=2))
 summary(rules_retail)
 #find redundant rules
 is.redundant(rules_retail)
@@ -240,8 +435,6 @@ is.redundant(rules_retail)
 rules_retail <- rules_retail[!is.redundant(rules_retail)]
 summary(rules_retail)
 plot(rules_retail)
-inspect(sort(rules_retail, by='support', decreasing = T)[1:5])
-inspect(sort(rules_retail, by='lift', decreasing = T)[1:5])
 plot(rules_retail, method="grouped")
 
 
