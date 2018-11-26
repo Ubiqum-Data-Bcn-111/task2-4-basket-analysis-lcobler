@@ -6,7 +6,7 @@ library(arules) #analyze transactional data
 library(arulesViz) #visual for arules package
 
 #upload dataset:
-transactions <- read.transactions("ElectronidexTransactions2017.csv",format="basket",sep=",",rm.duplicates=TRUE) 
+transactions <- read.transactions("/Users/lara/Dropbox/Ubiqum/Lesson 2/Task2.4/ElectronidexTransactions2017.csv",format="basket",sep=",",rm.duplicates=TRUE) 
 #duplicates in a transaction, not relevant for the analysis
 
 #inspect the dataset
@@ -28,7 +28,7 @@ inspect(transactions[size(transactions)==22])
 
 #remove empty transactions
 #read as a dataframe
-transactions_df <- read.csv("ElectronidexTransactions2017.csv", header = FALSE, sep = ",")
+transactions_df <- read.csv("/Users/lara/Dropbox/Ubiqum/Lesson 2/Task2.4/ElectronidexTransactions2017.csv", header = FALSE, sep = ",")
 #9835 rows
 transactions_df <- transactions_df[!apply(transactions_df == "", 1, all),]
 #9833 rows
@@ -66,19 +66,20 @@ for (k in 1:ncol(transactions_df_PT)){
   levels(transactions_df_PT[,k]) <- gsub(".*Mouse.*","Accessories",levels(transactions_df_PT[,k]))
   levels(transactions_df_PT[,k])[levels(transactions_df_PT[,k])=="Generic Black 3-Button"] <- "Accessories"
   levels(transactions_df_PT[,k]) <- gsub(".*Keyboard.*","Accessories",levels(transactions_df_PT[,k]))
-  levels(transactions_df_PT[,k]) <- gsub(".*Head.*","Accessories",levels(transactions_df_PT[,k]))
-  levels(transactions_df_PT[,k])[levels(transactions_df_PT[,k])=="Apple Earpods"] <- "Accessories"
-  levels(transactions_df_PT[,k])[levels(transactions_df_PT[,k])=="Monster Beats By Dr Dre"] <- "Accessories"
-  levels(transactions_df_PT[,k])[levels(transactions_df_PT[,k])=="Monster Beats By Dr Dre "] <- "Accessories"
   levels(transactions_df_PT[,k]) <- gsub(".*Cable.*","Accessories",levels(transactions_df_PT[,k]))
   levels(transactions_df_PT[,k])[levels(transactions_df_PT[,k])=="HDMI Adapter"] <- "Accessories"
-  levels(transactions_df_PT[,k]) <- gsub(".*Speaker.*","Accessories",levels(transactions_df_PT[,k]))
-  levels(transactions_df_PT[,k])[levels(transactions_df_PT[,k])=="DOSS Touch Wireless Bluetooth"] <- "Accessories"
-  levels(transactions_df_PT[,k])[levels(transactions_df_PT[,k])=="Cyber Acoustics"] <- "Accessories"
-  levels(transactions_df_PT[,k])[levels(transactions_df_PT[,k])=="Sonos"] <- "Accessories"
   levels(transactions_df_PT[,k]) <- gsub(".*Stand.*","Accessories",levels(transactions_df_PT[,k]))
   levels(transactions_df_PT[,k])[levels(transactions_df_PT[,k])=="Full Motion Monitor Mount"] <- "Accessories"
   levels(transactions_df_PT[,k]) <- gsub(".*Drive.*","Accessories",levels(transactions_df_PT[,k]))
+  #labels Audio
+  levels(transactions_df_PT[,k]) <- gsub(".*Head.*","Audio",levels(transactions_df_PT[,k]))
+  levels(transactions_df_PT[,k])[levels(transactions_df_PT[,k])=="Apple Earpods"] <- "Audio"
+  levels(transactions_df_PT[,k])[levels(transactions_df_PT[,k])=="Monster Beats By Dr Dre"] <- "Audio"
+  levels(transactions_df_PT[,k])[levels(transactions_df_PT[,k])=="Monster Beats By Dr Dre "] <- "Audio"
+  levels(transactions_df_PT[,k]) <- gsub(".*Speaker.*","Audio",levels(transactions_df_PT[,k]))
+  levels(transactions_df_PT[,k])[levels(transactions_df_PT[,k])=="DOSS Touch Wireless Bluetooth"] <- "Audio"
+  levels(transactions_df_PT[,k])[levels(transactions_df_PT[,k])=="Cyber Acoustics"] <- "Audio"
+  levels(transactions_df_PT[,k])[levels(transactions_df_PT[,k])=="Sonos"] <- "Audio"  
   #labels Software
   levels(transactions_df_PT[,k])[levels(transactions_df_PT[,k])=="Microsoft Office Home and Student 2016"] <- "Software"
   levels(transactions_df_PT[,k])[levels(transactions_df_PT[,k])=="Computer Game"] <- "Software"
@@ -121,6 +122,7 @@ pct_PT <- round(table_PT/sum(table_PT)*100)
 lbls<-names(table_PT)
 lbls<-paste(lbls,pct_PT,"%")
 pie(table_PT, labels = lbls, main="Sales by Product Type in Electronidex",col=rainbow(9))
+#make barplot
 
 # chart for blackwells
 blackwell <- read.csv("/Users/lara/Dropbox/Ubiqum/Lesson 2/Task2.3/existingproductattributes2017.2.csv", header = T, sep = ",")
@@ -156,7 +158,12 @@ retail_row <- c() #store row index in case I need it later
 companies_row <- c()
 for (m in 1:nrow(transactions_df_PT)){
   vector <- unname(unlist(transactions_df_PT[m,])) #vector without name
-  if (length(which(vector=="Desktop"|vector=="Laptop")) >=3){ #if contains 3 or more Desktop/Laptop
+  vector <- vector[!vector %in% ""] #remove empty columns
+  if ((length(which(vector=="Desktop"|vector=="Laptop")) >=3) |
+      (length(which(vector=="Printer")) >=2) |
+      (length(which(vector=="Tablet")) >=3) |
+      (length(which(vector=="Display")) >=3) |
+      (length(vector) >=8)){ #if contains 3 or more Desktop/Laptop
     companies <- rbind(companies,transactions_df_PT[m,])      #store it in companies
     companies_row <- append(companies_row, m)
   }else{
@@ -224,8 +231,42 @@ summary(companies_PT)
 itemFrequencyPlot(companies_PT,topN=9,col="Steelblue3",main="Companies")
 
 
+#Rules for retail
+rules_retail <- apriori (retail_PT, parameter = list(supp = 0.001, conf = 0.5, minlen=2))
+summary(rules_retail)
+#find redundant rules
+is.redundant(rules_retail)
+#remove redundant
+rules_retail <- rules_retail[!is.redundant(rules_retail)]
+summary(rules_retail)
+plot(rules_retail)
+inspect(sort(rules_retail, by='support', decreasing = T)[1:5])
+inspect(sort(rules_retail, by='lift', decreasing = T)[1:5])
+plot(rules_retail, method="grouped")
 
 
+
+#ByCategoriesDL<- apriori(CategoriesTransaction,parameter = list(support=0.05,conf=0.5,minlen=2),
+#                         appearance = list(rhs=c(“Desktops”),lhs=c(“Accessories”,“ActiveHeadphones”,“Cartridge”,“Computer Mice”,“ComputerCords”,“ComputerHeadphones”,“ExternalHD”,
+#                                                                    “Keyboards”,“MKCombo”,“Monitors”,“Printers”,“SmartHomeDevices”,“Software”,“Speakers”,“Stands”,“Tablets” ),default=“none”))
+
+#ByCategoriesDL<- apriori(CategoriesTransaction,parameter = list(support=0.001,conf=0.1,minlen=2),
+#                         appearance = list(rhs=c(“Accessories”,“ActiveHeadphones”,“Cartridge”,“Computer Mice”,“ComputerCords”,“ComputerHeadphones”,“ExternalHD”,
+#                                                  “Keyboards”,“MKCombo”,“Monitors”,“Printers”,“SmartHomeDevices”,“Software”,“Speakers”,“Stands”,“Tablets” ),lhs=c(c(“Desktops”) ),default=“none”))
+#inspect(head(sort(ByCategoriesDL,by=“lift”),20))
+
+
+
+#find redundant rules
+is.redundant(rules_2)
+#remove redundant
+rules_2 <- rules_2[!is.redundant(rules_2)]
+summary(rules_2)
+
+#plot rules
+rules_2_sorted <- sort(rules_2, by='support', decreasing = T)
+
+plot(rules_2[1:3], method="graph", control=list(type="items")) 
 
 
 
