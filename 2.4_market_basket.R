@@ -164,11 +164,13 @@ for (m in 1:nrow(transactions_df_PT)){
       (length(which(vector=="Printer")) >=2) |
       (length(which(vector=="Tablet")) >=3) |
       (length(which(vector=="Display")) >=3) |
-      (length(vector) >=8)){ #if contains 3 or more Desktop/Laptop
-    companies <- rbind(companies,transactions_df_PT[m,])      #store it in companies
+      (length(which(vector=="Accessories")) >=4) |
+      (length(which(vector=="Audio")) >=3) |
+      (length(vector) >=8)){ 
+   # companies <- rbind(companies,transactions_df_PT[m,])      #store it in companies
     companies_row <- append(companies_row, m)
   }else{
-    retail <- rbind(retail,transactions_df_PT[m,])
+   # retail <- rbind(retail,transactions_df_PT[m,])
     retail_row <- append(retail_row, m)
   }
 }
@@ -383,131 +385,94 @@ transactions@itemInfo$categories_electro <- categories_electro
 transactions_companies <- transactions[companies_row]
 transactions_individual <- transactions[retail_row]
 
+summary(transactions_companies)
+itemFrequencyPlot(transactions_companies,topN=10,col="Steelblue3",main="Companies")  ###
+
+D_and_L <- c(9,10,12,13,16,30,39,40,42,46,60,61,63,76,78,123,124,122,70)
+D_and_L <- itemLabels(transactions)[D_and_L]
+
+rules_com <- apriori(transactions_companies,parameter = list(support=0.001,conf=0.2,minlen=2),
+                     appearance = list(lhs=D_and_L,default="rhs"))
+rules_com <- rules_com[!is.redundant(rules_com)]  
+summary(rules_com)
+plot(rules_com)
+rules_com_sorted <- sort(rules_com, by='confidence', decreasing = T)
+inspect(rules_com_sorted[1:15])
+plot(rules_com_sorted[1:15], method="grouped")
+plot(rules_com_sorted[1:10], method="graph", control=list(type="item")) 
+
 #rules for companies, blackwell's categories
 transactions_companies_cat<- aggregate(transactions_companies, transactions_companies@itemInfo[["categories"]])
 summary(transactions_companies_cat)
-
-rules_com_cat<- apriori(transactions_companies_cat,parameter = list(support=0.001,conf=0.2,minlen=2),
-                        appearance = list(lhs=c("Desktop","Laptop"),
-                                          rhs=c("Accessories","Audio","Printer","Smart Home Devices","Display","Software",
-                                              "Ink","Tablet" ),default="none"))
+itemFrequencyPlot(transactions_companies_cat,topN=10,col="Steelblue3",main="Companies")
+rules_com_cat<- apriori(transactions_companies_cat,parameter = list(support=0.001,conf=0.02,minlen=2),
+                        appearance = list(lhs=c("Desktop","Laptop"),default="rhs"))
 rules_com_cat <- rules_com_cat[!is.redundant(rules_com_cat)]                         
-# 11 rules :S
+summary(rules_com_cat)
+inspect(sort(rules_com_cat,by="confidence",decreasing = T))
+plot(rules_com_cat, method="grouped", measure="confidence")
+plot(rules_com_cat, method="graph", control=list(type="item")) ##
 
 #rules for retail
+summary(transactions_individual)
+itemFrequencyPlot(transactions_individual,topN=10,col="Steelblue3",main="Retail")  ###
+
+rules_retail <- apriori(transactions_individual,parameter = list(support=0.001,conf=0.2,minlen=2),
+                     appearance = list(lhs=D_and_L,default="rhs"))
+rules_retail <- rules_retail[!is.redundant(rules_retail)]  
+summary(rules_retail)
+plot(rules_retail)
+rules_retail_sorted <- sort(rules_retail, by='confidence', decreasing = T)
+inspect(rules_retail_sorted)
+plot(rules_retail_sorted, method="grouped",measure="confidence")
+plot(rules_retail_sorted, method="graph", control=list(type="item")) 
+
 transactions_indiv_cat<- aggregate(transactions_individual, transactions_individual@itemInfo[["categories"]])
 summary(transactions_indiv_cat)
-
-rules_indiv_cat<- apriori(transactions_indiv_cat,parameter = list(support=0.001,conf=0.2,minlen=2),
-                          appearance = list(lhs=c("Desktop","Laptop")))
+itemFrequencyPlot(transactions_indiv_cat,topN=10,col="Steelblue3",main="Retail")
+rules_indiv_cat<- apriori(transactions_indiv_cat,parameter = list(support=0.001,conf=0.02,minlen=2),
+                        appearance = list(lhs=c("Desktop","Laptop"),default="rhs"))
 rules_indiv_cat <- rules_indiv_cat[!is.redundant(rules_indiv_cat)]                         
-plot(rules_indiv_cat)
-plot(rules_indiv_cat, method="grouped")
+summary(rules_indiv_cat)
+inspect(sort(rules_com_cat,by="confidence",decreasing = T))
+plot(rules_com_cat, method="grouped", measure="confidence")
+plot(rules_com_cat, method="graph", control=list(type="item")) ##
+
+#all transactions
+transactions_cat<- aggregate(transactions, transactions@itemInfo[["categories"]])
+summary(transactions_cat)
+itemFrequencyPlot(transactions_cat,topN=10,col="Steelblue3",main="All transactions")
+rules_cat<- apriori(transactions_cat,parameter = list(support=0.001,conf=0.02,minlen=2),
+                          appearance = list(lhs=c("Desktop","Laptop"),default="rhs"))
+rules_cat <- rules_cat[!is.redundant(rules_cat)]                         
+summary(rules_cat)
+inspect(sort(rules_cat,by="confidence",decreasing = T))
+plot(rules_cat, method="grouped", measure="confidence")
+plot(rules_cat, method="graph", control=list(type="item")) ##
+
 
 #rules for companies, electronidex cat
 transactions_companies_electro<- aggregate(transactions_companies, transactions_companies@itemInfo[["categories_electro"]])
 summary(transactions_companies_electro)
 
-rules_com_electro<- apriori(transactions_companies_electro,parameter = list(support=0.001,conf=0.2,minlen=2),
-                        appearance = list(lhs=c("Desktop","Laptop")))
+rules_com_electro<- apriori(transactions_companies_electro,parameter = list(support=0.001,conf=0.02,minlen=2),
+                            appearance = list(lhs=c("Desktop","Laptop"),default="rhs"))
 rules_com_electro <- rules_com_electro[!is.redundant(rules_com_electro)]                         
-# 17 rules :S
+summary(rules_com_electro)
+inspect(sort(rules_com_electro,by="confidence",decreasing = T))
+plot(rules_com_electro, method="grouped", measure="confidence")
+plot(rules_com_electro, method="graph", control=list(type="item")) ##
 
 #rules for retail, electronidex cat
-transactions_indiv_electro<- aggregate(transactions_individual, transactions_individual@itemInfo[["categories_electro"]])
-summary(transactions_indiv_electro)
+transactions_retail_electro<- aggregate(transactions_individual, transactions_individual@itemInfo[["categories_electro"]])
+summary(transactions_retail_electro)
 
-rules_indiv_electro<- apriori(transactions_indiv_electro,parameter = list(support=0.001,conf=0.2,minlen=2))
-rules_indiv_electro <- rules_indiv_electro[!is.redundant(rules_indiv_electro)]                         
-plot(rules_indiv_electro)
-
-
-plot(rules_indiv_electro, method="grouped")
-
-
-
-#Rules for retail
-rules_retail <- apriori (retail_PT, parameter = list(supp = 0.001, conf = 0.2, minlen=2))
-summary(rules_retail)
-#find redundant rules
-is.redundant(rules_retail)
-#remove redundant
-rules_retail <- rules_retail[!is.redundant(rules_retail)]
-summary(rules_retail)
-plot(rules_retail)
-plot(rules_retail, method="grouped")
+rules_retail_electro<- apriori(transactions_retail_electro,parameter = list(support=0.001,conf=0.02,minlen=2),
+                            appearance = list(lhs=c("Desktop","Laptop"),default="rhs"))
+rules_retail_electro <- rules_retail_electro[!is.redundant(rules_retail_electro)]                         
+summary(rules_retail_electro)
+inspect(sort(rules_retail_electro,by="confidence",decreasing = T))
+plot(rules_retail_electro, method="grouped", measure="confidence")
+plot(rules_retail_electro, method="graph", control=list(type="item")) ##
 
 
-
-#ByCategoriesDL<- apriori(CategoriesTransaction,parameter = list(support=0.05,conf=0.5,minlen=2),
-#                         appearance = list(rhs=c(“Desktops”),lhs=c(“Accessories”,“ActiveHeadphones”,“Cartridge”,“Computer Mice”,“ComputerCords”,“ComputerHeadphones”,“ExternalHD”,
-#                                                                    “Keyboards”,“MKCombo”,“Monitors”,“Printers”,“SmartHomeDevices”,“Software”,“Speakers”,“Stands”,“Tablets” ),default=“none”))
-
-#ByCategoriesDL<- apriori(CategoriesTransaction,parameter = list(support=0.001,conf=0.1,minlen=2),
-#                         appearance = list(rhs=c(“Accessories”,“ActiveHeadphones”,“Cartridge”,“Computer Mice”,“ComputerCords”,“ComputerHeadphones”,“ExternalHD”,
-#                                                  “Keyboards”,“MKCombo”,“Monitors”,“Printers”,“SmartHomeDevices”,“Software”,“Speakers”,“Stands”,“Tablets” ),lhs=c(c(“Desktops”) ),default=“none”))
-#inspect(head(sort(ByCategoriesDL,by=“lift”),20))
-
-
-
-#find redundant rules
-is.redundant(rules_2)
-#remove redundant
-rules_2 <- rules_2[!is.redundant(rules_2)]
-summary(rules_2)
-
-#plot rules
-rules_2_sorted <- sort(rules_2, by='support', decreasing = T)
-
-plot(rules_2[1:3], method="graph", control=list(type="items")) 
-
-
-
-
-
-
-
-
-
-
-#Apriori algorithm
-rules_1 <- apriori (transactions, parameter = list(supp = 0.1, conf = 0.8))
-#0 rules
-#occurring in 1% transactions, with 80% correct
-rules_2 <- apriori (transactions, parameter = list(supp = 0.001, conf = 0.8))
-#635 rules
-rules_2 <- apriori (transactions, parameter = list(supp = 0.001, conf = 0.9))
-#197 rules
-summary(rules_2)
-inspect(sort(rules_2, by='support', decreasing = T)[1:5])
-inspect(sort(rules_2, by='lift', decreasing = T)[1:5])
-
-#find redundant rules
-is.redundant(rules_2)
-#remove redundant
-rules_2 <- rules_2[!is.redundant(rules_2)]
-summary(rules_2)
-
-#plot rules
-rules_2_sorted <- sort(rules_2, by='support', decreasing = T)
-plot(rules_2[1:3], method="graph", control=list(type="items")) 
-
-
-
-
-#see if products from Blackwells are in RHS
-
-#what factors influenced the purchase of product x
-#rules <- apriori (data=Groceries, parameter=list (supp=0.001,conf = 0.08), appearance = list (default="lhs",rhs="whole milk"), control = list (verbose=F)) # get rules that lead to buying 'whole milk'
-#rules_conf <- sort (rules, by="confidence", decreasing=TRUE) # 'high-confidence' rules.
-#inspect(head(rules_conf))
-
-
-
-#ItemRules <- subset(RulesName, items %in% "item name")
-
-
-
-#for i sdd:
-#  for j dffits(
-#    type[[i]][j] find element j in the list i from type
