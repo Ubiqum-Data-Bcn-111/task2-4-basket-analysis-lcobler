@@ -118,29 +118,41 @@ for (k in 1:ncol(transactions_df_PT)){
 
 #find frequency each category
 table_PT <- table(as.matrix(transactions_df_PT))[3:11] #remove empty spaces
+table_PT  <- table_PT[order(table_PT[2,],decreasing=TRUE),]
 pct_PT <- round(table_PT/sum(table_PT)*100)
 lbls<-names(table_PT)
 lbls<-paste(lbls,pct_PT,"%")
 pie(table_PT, labels = lbls, main="Sales by Product Type in Electronidex",col=rainbow(9))
 #make barplot
+par(mar = c(9, 4, 4, 2) + 0.1) #make space for the labels
+barplot(sort(table_PT, decreasing=T), main="Sales by Product Type in Electronidex", col="steelblue3",ylab="Sales Volume",
+        las=2) #las=2 vertical names
+
 
 # chart for blackwells
 blackwell <- read.csv("/Users/lara/Dropbox/Ubiqum/Lesson 2/Task2.3/existingproductattributes2017.2.csv", header = T, sep = ",")
-blackwell <- blackwell[,c("ProductType","Volume")]
+blackwell <- blackwell[-c(35:41),c("ProductType","Volume")]
 blackwell_a <- aggregate(blackwell$Volume, by=list(blackwell$ProductType),FUN=sum)
+blackwell_a  <- blackwell_a[order(blackwell_a[,2],decreasing=TRUE),]
 pct_bl <- round(blackwell_a$x/sum(blackwell_a$x)*100)
-lbls_bl<-blackwell_a$Group.1
-lbls_bl<-paste(lbls_bl,pct_bl,"%")
+lbls_bl<-sort(blackwell_a$Group.1,decreasing=T)
+#lbls_bl<-paste(lbls_bl,pct_bl,"%")
 pie(blackwell_a$x, labels = lbls_bl, main="Sales by Product Type in Blackwell",col=rainbow(9))
+
+par(mar = c(9, 4, 4, 2) + 0.1) #make space for the labels
+barplot(blackwell_a$x,names.arg =blackwell_a$Group.1, main="Sales by Product Type in Blackwell", col="steelblue3",ylab="Sales Volume",
+        las=2) #las=2 vertical names
 
 #see what are the product types repeated in the same transaction
 duplicated_product <- factor() #vector that contains all duplicated items
+duplicated_df <- NULL
 for (i in 1:nrow(transactions_df_PT)){
   vector <- unname(unlist(transactions_df_PT[i,])) #vector without name
   vector <- vector[!vector %in% ""] #remove empty columns
   for (j in 1:length(vector)){
     if (duplicated(vector)[j]){
       duplicated_product <- append(duplicated_product,as.character(vector[j])) #save duplicated item with the name
+      duplicated_df = rbind(duplicated_df, data.frame(i, vector[j]))
     }
   }
 }
@@ -148,6 +160,31 @@ table(duplicated_product) #most desktops and laptops!
 table_duplicates <- sort(table(duplicated_product),decreasing = T)
 barplot(table_duplicates, main="Duplicated Product types",col=rainbow(9))
 #sort first!
+
+table(duplicated_df) #duplicated, needs to add 1 to 
+
+
+#number products per transaction
+numProducts_df <- as.data.frame(matrix(ncol=10,nrow=0))
+for (i in 1:nrow(transactions_df_PT)){
+  vector <- unname(unlist(transactions_df_PT[i,])) #vector without name
+  vector <- vector[!vector %in% ""] #remove empty columns
+  numProducts_df = rbind(numProducts_df, data.frame(length(which(vector=="Desktop")),
+                                                    length(which(vector=="Laptop")),
+                                                    length(which(vector=="Accessories")),
+                                                    length(which(vector=="Audio")),
+                                                    length(which(vector=="Software")),
+                                                    length(which(vector=="Display")),
+                                                    length(which(vector=="Ink")),
+                                                    length(which(vector=="Printer")),
+                                                    length(which(vector=="Tablet")),
+                                                    length(which(vector=="Smart Home Devices"))))
+}
+names(numProducts_df) <- c("Desktop","Laptop","Accessories","Audio","Software","Display","Ink","Printer","Tablet","Smart_home")
+numProducts_df[numProducts_df == 0] <- NA
+summary(numProducts_df)
+boxplot(numProducts_df,ylab="Items/Transaction", main="Items/Transaction by Product Type")
+
 
 #save the dataframe by product type
 write.table(transactions_df_PT, file = "transactions_PT_all.csv", col.names = FALSE, row.names = FALSE, sep = ",")
@@ -200,21 +237,21 @@ summary(transactions)
 itemFrequencyPlot(transactions) #too much items
 itemFrequencyPlot(transactions,
                   support=0.1) #items with greater than or equal to 10% frequency 
-#top 10 items
+#top 15 items
 itemFrequencyPlot(transactions,
-                  type="absolute", #maybe "relative"
-                  topN=10,
+                  topN=15,
                   #horiz=TRUE,
                   col='steelblue3',
                   xlab='',
-                  main='Item frequency, absolute')
+                  main='Most Frequently Bought Items from Electronidex')
 #least frequenly bought
-barplot(sort(table(unlist(LIST(transactions))))[1:10],
-        horiz=TRUE,
-        las=1,
+par(mar = c(16, 4, 4, 2) + 0.3)
+barplot(sort(table(unlist(LIST(transactions))))[1:15]/9833,
+        #horiz=TRUE,
+        las=2,
         col='steelblue3',
         xlab='',
-        main='Frequency, absolute')
+        main='Least Frequently Bought Items from Electronidex')
 #needs resize to see the labels
 #visualize transactions
 image(transactions[1:500]) #firsts 500 tranactions
@@ -386,7 +423,7 @@ transactions_companies <- transactions[companies_row]
 transactions_individual <- transactions[retail_row]
 
 summary(transactions_companies)
-itemFrequencyPlot(transactions_companies,topN=10,col="Steelblue3",main="Companies")  ###
+itemFrequencyPlot(transactions_companies,topN=10,col="Steelblue3",main="B2b")  ###
 
 D_and_L <- c(9,10,12,13,16,30,39,40,42,46,60,61,63,76,78,123,124,122,70)
 D_and_L <- itemLabels(transactions)[D_and_L]
@@ -415,7 +452,7 @@ plot(rules_com_cat, method="graph", control=list(type="item")) ##
 
 #rules for retail
 summary(transactions_individual)
-itemFrequencyPlot(transactions_individual,topN=10,col="Steelblue3",main="Retail")  ###
+itemFrequencyPlot(transactions_individual,topN=10,col="Steelblue3",main="B2C")  ###
 
 rules_retail <- apriori(transactions_individual,parameter = list(support=0.001,conf=0.2,minlen=2),
                      appearance = list(lhs=D_and_L,default="rhs"))
@@ -448,7 +485,7 @@ rules_cat <- rules_cat[!is.redundant(rules_cat)]
 summary(rules_cat)
 inspect(sort(rules_cat,by="confidence",decreasing = T))
 plot(rules_cat, method="grouped", measure="confidence")
-plot(rules_cat, method="graph", control=list(type="item")) ##
+plot(rules_cat, method="graph", measure="confidence",control=list(type="item"), main="Rules for Eletronidex Product Types") ##
 
 
 #rules for companies, electronidex cat
@@ -474,5 +511,4 @@ summary(rules_retail_electro)
 inspect(sort(rules_retail_electro,by="confidence",decreasing = T))
 plot(rules_retail_electro, method="grouped", measure="confidence")
 plot(rules_retail_electro, method="graph", control=list(type="item")) ##
-
 
