@@ -1,4 +1,4 @@
-task2-4-basket-analysis-lcobler# Market basket analysis
+# Market basket analysis
 
 ## Objective
 We were appointed to do a market basket analysis for Electronidex. Determine the type customers and if Blackwell's Electroniks would benenfit acquiring Electronidex.
